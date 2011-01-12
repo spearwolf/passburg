@@ -13,12 +13,12 @@ module Passburg  # {{{
     attr_reader :sections
 
     def initialize(data)
-      @sections = []
+      @sections = new_sections_array
       parse(data)
     end
 
-    def to_s
-      "# passburg safe, v1\n" + sections_to_s(sections, true)
+    def to_s(show_passwords = false)
+      "# passburg safe, v1\n\n" + sections.to_s(show_passwords)
     end
 
     def find_sections(*args)
@@ -38,6 +38,22 @@ module Passburg  # {{{
 
     private # {{{
 
+    def new_sections_array
+      [].tap do |sections|
+        def sections.to_s(show_passwords = false)
+          map {|section| section.to_s(show_passwords) }.join("---\n")
+        end
+      end
+    end
+
+    def new_section
+      {}.tap do |section|
+        def section.to_s(show_passwords = false)
+          map {|k, v| show_passwords || !PASSWORD_KEYS.include?(k) ? "#{k}=#{v}\n" : nil }.compact.join
+        end
+      end
+    end
+
     def sections_to_s(sections, show_passwords = false)
       sections.map {|section| (["---\n"] + section.map {|k, v|
         show_passwords || !PASSWORD_KEYS.include?(k) ? "#{k}=#{v}\n" : nil
@@ -46,7 +62,7 @@ module Passburg  # {{{
 
     # in data: array of lines
     def parse(data)
-      current_section = {}
+      current_section = new_section
       data.each do |line|
         current_line = line.chomp.strip
         case current_line
@@ -61,7 +77,7 @@ module Passburg  # {{{
         when /^---+$/
           unless current_section.empty?
             @sections << current_section
-            current_section = {}
+            current_section = new_section
           end
           #puts "new section identifier"
         #else
