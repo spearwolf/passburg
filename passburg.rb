@@ -25,25 +25,31 @@ module Passburg  # {{{
       sections.select do |section|
         section_values = section.keys.select {|key| !PASSWORD_KEYS.include?(key) }.map {|key| section[key] }
         args.all? {|arg| section_values.any? {|value| value =~ /#{arg}/i } }
+      end.tap do |sections|
+        define_sections_to_s(sections)
       end
     end
 
     def find(*args)
-      sections_to_s find_sections(*args)
+      find_sections(*args).to_s
     end
 
     def show(*args)
-      sections_to_s(find_sections(*args), true)
+      find_sections(*args).to_s(true)
     end
 
     private # {{{
 
-    def new_sections_array
-      [].tap do |sections|
-        def sections.to_s(show_passwords = false)
+    def define_sections_to_s(instance)
+      instance.tap do |instance|
+        def instance.to_s(show_passwords = false)
           map {|section| section.to_s(show_passwords) }.join("---\n")
         end
       end
+    end
+
+    def new_sections_array
+      [].tap {|sections| define_sections_to_s sections }
     end
 
     def new_section
@@ -52,12 +58,6 @@ module Passburg  # {{{
           map {|k, v| show_passwords || !PASSWORD_KEYS.include?(k) ? "#{k}=#{v}\n" : nil }.compact.join
         end
       end
-    end
-
-    def sections_to_s(sections, show_passwords = false)
-      sections.map {|section| (["---\n"] + section.map {|k, v|
-        show_passwords || !PASSWORD_KEYS.include?(k) ? "#{k}=#{v}\n" : nil
-      }).compact.join }.join
     end
 
     # in data: array of lines
@@ -73,15 +73,11 @@ module Passburg  # {{{
         when /^([\w]+)\s*[:=]\s*(.*)$/
           key, value = $1, $2
           current_section[key] = value
-          #puts "key='#{key}', value='#{value}'"
         when /^---+$/
           unless current_section.empty?
             @sections << current_section
             current_section = new_section
           end
-          #puts "new section identifier"
-        #else
-          #puts "ignoring line: '#{current_line}'"
         end
       end
       @sections << current_section unless current_section.empty?
