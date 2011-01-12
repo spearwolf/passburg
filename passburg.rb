@@ -92,7 +92,19 @@ module Passburg  # {{{
   # }}}
 
   def encrypt(data, pass = ask_for_password)  # {{{
-    gpg = IO.popen("gpg --no-verbose --quiet --batch --armor --no-use-agent --symmetric --cipher-algo #{CIPHER_ALGORITHM} --passphrase-fd 0", "r+")
+    gpg_action data, pass, "--armor --symmetric --cipher-algo #{CIPHER_ALGORITHM}"
+  end
+  # }}}
+
+  def decrypt(data, pass = ask_for_password)  # {{{
+    gpg_action data, pass, "--no-use-agent --decrypt -"
+  end
+  # }}}
+
+  private # {{{
+
+  def gpg_action(data, pass, gpg_options)
+    gpg = IO.popen("gpg --no-verbose --quiet --batch --no-use-agent --passphrase-fd 0 #{gpg_options}", "r+")
     gpg.puts pass
     gpg.puts data
     gpg.close_write
@@ -102,16 +114,6 @@ module Passburg  # {{{
   end
   # }}}
 
-  def decrypt(data, pass = ask_for_password)  # {{{
-    gpg = IO.popen("gpg --no-verbose --quiet --batch --no-use-agent --passphrase-fd 0 --decrypt -", "r+")
-    gpg.puts pass
-    gpg.puts data
-    gpg.close_write
-    gpg.readlines.tap do
-      gpg.close
-    end
-  end
-  # }}}
 end
 # }}}
 
