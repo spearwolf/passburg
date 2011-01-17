@@ -8,6 +8,7 @@ module Passburg  # {{{
 
   CIPHER_ALGORITHM = 'AES256'
   PASSWORD_KEYS = %w(pass pw passwd password passphrase)
+  HOME_DIR_PATH = ENV["PASSBURG_HOME"] || File.join(ENV["HOME"], '.passburg')
 
   class Safe  # {{{
     attr_reader :sections
@@ -101,6 +102,10 @@ module Passburg  # {{{
   end
   # }}}
 
+  def mkdir!(home_path = HOME_DIR_PATH)
+    FileUtils.mkdir(home_path) unless File.directory?(home_path)
+  end
+
   private # {{{
 
   def gpg_action(data, pass, gpg_options)
@@ -119,6 +124,8 @@ end
 
 
 if __FILE__ == $0
+
+  Passburg.mkdir!
 
   @pass = Passburg.ask_for_password
   safe = Passburg.encrypt <<DATA, @pass
@@ -160,5 +167,9 @@ DATA
 
   puts ">>>>>>>>>>> xxx, foo:"
   puts pw_safe.find("xxx", "foo")
+
+  puts "------------[blank safe content]-----------"
+  empty_safe = Passburg::Safe.new([])
+  puts empty_safe.to_s
 
 end
