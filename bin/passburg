@@ -1,0 +1,67 @@
+#!/usr/bin/env ruby
+# << passburg >>
+# created 2011 by wolfger@spearwolf.de
+require "passburg"
+require "optparse"
+require "ostruct"
+
+passburg_cmd = :find  # {{{
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: passburg [options] .."
+
+  opts.separator ""
+  opts.separator "Common options:"
+
+  opts.on("--show", "Show password/s") do
+    passburg_cmd = :show
+  end
+
+  opts.on("-a", "--add", "Add new password section/s") do
+    passburg_cmd = :add
+  end
+
+  opts.on("--export", "Export raw password data") do
+    passburg_cmd = :export
+  end
+
+  opts.on("--edit", "Edit raw password database") do
+    passburg_cmd = :edit
+  end
+
+  opts.on_tail("-v", "--version", "Show version") do
+    puts "passburg: v#{Passburg::VERSION}"
+    exit
+  end
+end.parse!
+# }}}
+
+SAFE_FILE_PATH = File.join(Passburg::HOME_DIR_PATH, "password.safe")
+
+Passburg.mkdir!
+@pass = Passburg.ask_for_password
+pw_safe = if File.exists?(SAFE_FILE_PATH)
+            begin
+              Passburg::Safe.new Passburg.decrypt(IO.read(SAFE_FILE_PATH), @pass)
+            rescue
+              exit
+            end
+          else
+            Passburg::Safe.new([]).tap do |safe|
+              File.open(SAFE_FILE_PATH, "w") do |out|
+                out.puts Passburg.encrypt(safe, @pass)
+              end
+            end
+          end
+
+case passburg_cmd
+when :find
+  pw_safe.find(*ARGV)
+when :show
+  pw_safe.show(*ARGV)
+when :export
+  puts pw_safe.to_s
+else
+  $stderr.puts "TODO: passburg_cmd=#{passburg_cmd}"
+end
+

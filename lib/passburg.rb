@@ -115,6 +115,8 @@ module Passburg  # {{{
     gpg.close_write
     gpg.readlines.tap do
       gpg.close
+      #puts "gpg state: #{$?.to_i}"
+      raise "sorry, wrong password!" unless $?.to_i == 0
     end
   end
   # }}}
@@ -122,8 +124,7 @@ module Passburg  # {{{
 end
 # }}}
 
-
-if __FILE__ == $0
+if __FILE__ == $0   # {{{
 
   Passburg.mkdir!
 
@@ -173,3 +174,4 @@ DATA
   puts empty_safe.to_s
 
 end
+# }}}

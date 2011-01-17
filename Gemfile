@@ -1,5 +1,8 @@
 source "http://rubygems.org"
 
-gem "highline", ">=1.6.1"
+# Specify your gem's dependencies in passburg.gemspec
+gemspec
+
+#gem "highline", ">=1.6.1"
 
 # vim: ft=ruby:
