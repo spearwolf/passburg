@@ -2,6 +2,7 @@
 # << passburg >>
 # created 2011 by wolfger@spearwolf.de
 require "passburg"
+require "passburg/version"
 require "optparse"
 require "ostruct"
 require "tempfile"
