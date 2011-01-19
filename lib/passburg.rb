@@ -22,13 +22,13 @@ module Passburg  # {{{
       "# passburg safe, v1\n\n" + sections.to_s(show_passwords)
     end
 
-    def find_sections(*args)
-      sections.select do |section|
+    def find_sections(*query_args)
+      query_args.flatten!
+      found = sections.select do |section|
         section_values = section.keys.select {|key| !PASSWORD_KEYS.include?(key) }.map {|key| section[key] }
-        args.all? {|arg| section_values.any? {|value| value =~ /#{arg}/i } }
-      end.tap do |sections|
-        define_sections_to_s(sections)
+        query_args.all? {|arg| section_values.any? {|value| nil != (value =~ /#{arg}/i) }}
       end
+      new_sections_array(found)
     end
 
     def find(*args)
@@ -37,28 +37,6 @@ module Passburg  # {{{
 
     def show(*args)
       find_sections(*args).to_s(true)
-    end
-
-    private # {{{
-
-    def define_sections_to_s(instance)
-      instance.tap do |instance|
-        def instance.to_s(show_passwords = false)
-          map {|section| section.to_s(show_passwords) }.join("---\n")
-        end
-      end
-    end
-
-    def new_sections_array
-      [].tap {|sections| define_sections_to_s sections }
-    end
-
-    def new_section
-      {}.tap do |section|
-        def section.to_s(show_passwords = false)
-          map {|k, v| show_passwords || !PASSWORD_KEYS.include?(k) ? "#{k}=#{v}\n" : nil }.compact.join
-        end
-      end
     end
 
     # in data: array of lines
@@ -82,6 +60,28 @@ module Passburg  # {{{
         end
       end
       @sections << current_section unless current_section.empty?
+    end
+
+    private # {{{
+
+    def define_sections_to_s(instance)
+      instance.tap do |instance|
+        def instance.to_s(show_passwords = false)
+          map {|section| section.to_s(show_passwords) }.join("---\n")
+        end
+      end
+    end
+
+    def new_sections_array(ar = [])
+      ar.tap {|sections| define_sections_to_s sections }
+    end
+
+    def new_section
+      {}.tap do |section|
+        def section.to_s(show_passwords = false)
+          map {|k, v| show_passwords || !PASSWORD_KEYS.include?(k) ? "#{k}: #{v}\n" : nil }.compact.join
+        end
+      end
     end
     # }}}
   end
@@ -115,7 +115,6 @@ module Passburg  # {{{
     gpg.close_write
     gpg.readlines.tap do
       gpg.close
-      #puts "gpg state: #{$?.to_i}"
       raise "sorry, wrong password!" unless $?.to_i == 0
     end
   end
