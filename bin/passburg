@@ -72,7 +72,7 @@ def blank?(str)
 end
 
 def show_result(result)
-  puts "---\n#{result}\n---" unless blank? result
+  puts "---\n#{result}---" unless blank? result
 end
 
 case passburg_cmd
