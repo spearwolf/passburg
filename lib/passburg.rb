@@ -88,7 +88,8 @@ module Passburg  # {{{
   # }}}
 
   def ask_for_password  # {{{
-    ask("Enter your password: " ) {|q| q.echo = "*" }
+    hi = HighLine.new($stdin, $stderr)
+    hi.ask("Enter your password: " ) {|q| q.echo = "*" }
   end
   # }}}
 
